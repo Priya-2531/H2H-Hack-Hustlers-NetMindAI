@@ -1,2 +1,9 @@
-def parse_log(log):
-    return {"message": log}
+def parse_logs(log_lines):
+    parsed = []
+
+    for line in log_lines:
+        parsed.append({
+            "raw": line
+        })
+
+    return parsed

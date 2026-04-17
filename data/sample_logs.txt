@@ -1,3 +1,4 @@
-Jan 10 ERROR Failed login
+Jan 10 ERROR Failed login attempt
 Jan 10 INFO User logged in
-Jan 10 WARNING High CPU usage
+Jan 10 WARNING Disk space low
+Jan 11 ERROR Database connection failed
