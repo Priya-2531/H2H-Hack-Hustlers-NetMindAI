@@ -7,8 +7,17 @@ Network logs are complex and hard to understand.
 This project converts logs into human-readable insights using AI.
 
 ## Tech Stack
+FRONTEND
+- HTML5
+- JavaScipt
+- TailWind CSS
+
+BACKEND
 - Python
-- Streamlit
+- Flask
+- Flask-CORS
+
+
 
 ## Features
 - Log parsing
