@@ -1,67 +1,67 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
 import requests
-
-# 🔹 Gemini
 
 app = Flask(__name__)
 CORS(app)
 
 
-# 🤖 Gemini AI Summary
-
-
-import requests
-
+# 🤖 AI (Ollama + fallback)
 import requests
 
 def generate_ai_summary(summary, incidents):
     try:
-        API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-small"
+        print("🚀 Calling Ollama...")
 
         prompt = f"""
 Analyze cybersecurity logs:
 Total: {summary['total']}
 High: {summary['high']}
 Medium: {summary['medium']}
+Incidents: {incidents}
 
-Incidents:
-{incidents}
-
-Give threats, causes and solutions.
+Give:
+1. Threat
+2. Cause
+3. Fix
 """
 
-        response = requests.post(API_URL, json={"inputs": prompt})
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "phi",
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=60
+        )
 
         result = response.json()
 
-        print("HF RESPONSE:", result)  # 🔍 debug
-
-        # ✅ Case 1: Normal response
-        if isinstance(result, list) and "generated_text" in result[0]:
-            return result[0]["generated_text"]
-
-        # ❌ Case 2: Model loading
-        if isinstance(result, dict) and "error" in result:
-            return "⚠️ AI model loading... using fallback."
-
-        return fallback(summary)
+        return result["response"], "ollama"
 
     except Exception as e:
-        print("HF ERROR:", e)
-        return fallback(summary)
+        print("❌ Ollama failed:", e)
+        return fallback_ai(summary), "fallback"
 
-#FALLBACK SUMMARY
-def fallback(summary):
-    if summary["high"] > 3:
-        return "🚨 High risk detected. Possible cyber attacks."
-    elif summary["medium"] > 2:
-        return "⚠️ Medium risk. Monitor system."
+
+# 🔁 Fallback AI (VERY IMPORTANT)
+def fallback_ai(summary, incidents):
+
+    if summary["high"] > 0:
+        return """Brute force or critical attack detected
+Weak passwords or unauthorized access
+Enable MFA and monitor login attempts"""
+
+    elif summary["medium"] > 0:
+        return """System warnings detected
+Possible resource or config issues
+Monitor system and fix warnings"""
+
     else:
-        return "✅ System stable."
-
-
+        return """System stable
+No major threats detected
+Continue monitoring logs"""
 
 
 # 🔍 Log Processing
@@ -96,6 +96,8 @@ def process_logs(file):
             type_ = "SQL Injection"
         elif "disk" in l:
             type_ = "Resource Issue"
+        elif "database" in l:
+            type_ = "Database Failure"
 
         if severity != "Info":
             incidents.append({
@@ -103,41 +105,44 @@ def process_logs(file):
                 "severity": severity,
                 "message": line
             })
+
             attack_types[type_] = attack_types.get(type_, 0) + 1
 
-    risk_score = high * 3 + medium
+    # Risk score
+    risk_score = min(100, high * 10 + medium * 5)
 
-    if risk_score > 10:
+    if risk_score > 60:
         risk = "HIGH"
-    elif risk_score > 5:
+    elif risk_score > 30:
         risk = "MEDIUM"
     else:
         risk = "LOW"
 
     summary = {
-        "total": len([l for l in lines if l.strip()]),
+        "total": len(lines),
         "high": high,
         "medium": medium,
-        "risk_level": risk
+        "risk_level": risk,
+        "risk_score": risk_score
     }
 
-    ai_summary = str(generate_ai_summary(summary, incidents))
+    ai_summary , source= generate_ai_summary(summary, incidents)
 
-    return ({
+    return {
         "incidents": incidents,
         "attack_types": attack_types,
         "summary": summary,
-        "ai_summary": ai_summary
-    })
+        "ai_summary": ai_summary,
+        "ai_source" : source
+    }
 
 
-# 🌐 API
 @app.route("/analyze", methods=["POST"])
 def analyze():
     file = request.files["file"]
     result = process_logs(file)
-    return (result)
+    return jsonify(result)
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

@@ -285,43 +285,41 @@
 </div>
 </main>
 <!-- FAB Suppression: On Detail/Upload screens FAB is suppressed per the Shell Visibility rules -->
-
 <script>
 function uploadFile() {
-    alert("Button clicked");
+    let input = document.createElement("input");
+    input.type = "file";
 
-    let fileInput = document.createElement("input");
-    fileInput.type = "file";
-
-    fileInput.onchange = async function () {
-        alert("File selected");   // 👈 ADD THIS
-
-        let file = fileInput.files[0];
+    input.onchange = async function () {
+        let file = input.files[0];
 
         let formData = new FormData();
         formData.append("file", file);
 
         try {
-            let res = await fetch("http://127.0.0.1:5000/upload", {
+            let res = await fetch("http://127.0.0.1:5000/analyze", {
                 method: "POST",
                 body: formData
             });
 
-            alert("Response received");  // 👈 ADD THIS
-
             let data = await res.json();
 
+            console.log("Backend response:", data);
 
-localStorage.setItem("incidents", JSON.stringify(data.incidents));
-window.location.href = "../netsage_dashboard/code.html";
+            localStorage.setItem("incidentsData", JSON.stringify(data));
+
+            alert("Analysis Done ✅");
+
+            // 🔥 REDIRECT
+            window.location.href = "../netsage_dashboard/code.html";
 
         } catch (err) {
-            alert("Error: Backend not connected");
+            alert("Backend not running ❌");
             console.error(err);
         }
     };
 
-    fileInput.click();
+    input.click();
 }
 </script>
 </body></html>
