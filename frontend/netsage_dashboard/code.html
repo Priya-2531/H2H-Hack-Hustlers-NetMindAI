@@ -141,7 +141,7 @@ document.getElementById("aiSummary").innerHTML = "🤖 Thinking...";
 let formData = new FormData();
 formData.append("file", file);
 
-let res = await fetch("http://127.0.0.1:5000/analyze", {
+let res = await fetch("https://h2h-hack-hustlers-netmindai.onrender.com/analyze", {
 method: "POST",
 body: formData
 });
