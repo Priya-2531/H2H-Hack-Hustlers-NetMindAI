@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests, time, logging
-from config import Config
-import os
+from backend.config import Config
+
 
 app = Flask(__name__)
 CORS(app)
