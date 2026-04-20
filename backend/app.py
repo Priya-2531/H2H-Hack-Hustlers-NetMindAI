@@ -1,148 +1,122 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import requests
+import requests, time, logging
+from config import Config
+import os
 
 app = Flask(__name__)
 CORS(app)
 
+logging.basicConfig(level=logging.INFO)
 
-# 🤖 AI (Ollama + fallback)
-import requests
 
-def generate_ai_summary(summary, incidents):
+# 🔁 fallback AI
+def fallback(summary):
+    return """Potential threat detected
+Possible weak authentication or anomaly
+Enable monitoring and apply fixes"""
+
+
+# 🤖 AI ENGINE
+def generate_ai(summary, incidents):
+    start = time.time()
+
     try:
-        print("🚀 Calling Ollama...")
-
-        prompt = f"""
-Analyze cybersecurity logs:
-Total: {summary['total']}
-High: {summary['high']}
-Medium: {summary['medium']}
-Incidents: {incidents}
-
-Give:
-1. Threat
-2. Cause
-3. Fix
-"""
-
-        response = requests.post(
-            "http://localhost:11434/api/generate",
+        res = requests.post(
+            Config.OLLAMA_URL,
             json={
-                "model": "phi",
-                "prompt": prompt,
+                "model": Config.MODEL,
+                "prompt": f"Analyze: {incidents[:2]} give threat cause fix",
                 "stream": False
             },
-            timeout=60
+            timeout=Config.TIMEOUT
         )
 
-        result = response.json()
+        text = res.json().get("response", "").strip()
 
-        return result["response"], "ollama"
+        if len(text) < 10:
+            raise Exception("Invalid AI output")
+
+        return {
+            "text": text,
+            "source": "ollama",
+            "model": Config.MODEL,
+            "time": round((time.time() - start) * 1000, 2),
+            "confidence": 90,
+            "status": "success"
+        }
 
     except Exception as e:
-        print("❌ Ollama failed:", e)
-        return fallback_ai(summary), "fallback"
+        logging.error(f"AI error: {e}")
+
+        return {
+            "text": fallback(summary),
+            "source": "fallback",
+            "model": "rule-based",
+            "time": round((time.time() - start) * 1000, 2),
+            "confidence": 60,
+            "status": "degraded"
+        }
 
 
-# 🔁 Fallback AI (VERY IMPORTANT)
-def fallback_ai(summary, incidents):
+# 🔍 log processing
+def process_logs(lines):
+    incidents, high, medium = [], 0, 0
 
-    if summary["high"] > 0:
-        return """Brute force or critical attack detected
-Weak passwords or unauthorized access
-Enable MFA and monitor login attempts"""
-
-    elif summary["medium"] > 0:
-        return """System warnings detected
-Possible resource or config issues
-Monitor system and fix warnings"""
-
-    else:
-        return """System stable
-No major threats detected
-Continue monitoring logs"""
-
-
-# 🔍 Log Processing
-def process_logs(file):
-    content = file.read().decode("utf-8")
-    lines = content.split("\n")
-
-    incidents = []
-    high = 0
-    medium = 0
-    attack_types = {}
-
-    for line in lines:
-        if not line.strip():
+    for l in lines:
+        l = l.strip()
+        if not l:
             continue
 
-        l = line.lower()
-
-        severity = "Info"
-        type_ = "Normal"
-
-        if "error" in l:
-            severity = "High"
+        if "error" in l.lower():
             high += 1
-        elif "warning" in l:
-            severity = "Medium"
+            incidents.append({"severity": "High", "message": l})
+        elif "warning" in l.lower():
             medium += 1
+            incidents.append({"severity": "Medium", "message": l})
 
-        if "login" in l:
-            type_ = "Brute Force"
-        elif "sql" in l:
-            type_ = "SQL Injection"
-        elif "disk" in l:
-            type_ = "Resource Issue"
-        elif "database" in l:
-            type_ = "Database Failure"
-
-        if severity != "Info":
-            incidents.append({
-                "type": type_,
-                "severity": severity,
-                "message": line
-            })
-
-            attack_types[type_] = attack_types.get(type_, 0) + 1
-
-    # Risk score
-    risk_score = min(100, high * 10 + medium * 5)
-
-    if risk_score > 60:
-        risk = "HIGH"
-    elif risk_score > 30:
-        risk = "MEDIUM"
-    else:
-        risk = "LOW"
+    score = min(100, high * 10 + medium * 5)
 
     summary = {
         "total": len(lines),
         "high": high,
         "medium": medium,
-        "risk_level": risk,
-        "risk_score": risk_score
+        "risk_level": "HIGH" if score > 60 else "MEDIUM" if score > 30 else "LOW",
+        "risk_score": score
     }
 
-    ai_summary , source= generate_ai_summary(summary, incidents)
-
-    return {
-        "incidents": incidents,
-        "attack_types": attack_types,
-        "summary": summary,
-        "ai_summary": ai_summary,
-        "ai_source" : source
-    }
+    return summary, incidents
 
 
+# 🌐 API
 @app.route("/analyze", methods=["POST"])
 def analyze():
-    file = request.files["file"]
-    result = process_logs(file)
-    return jsonify(result)
+    try:
+        if "file" not in request.files:
+            return jsonify({"error": "No file uploaded"}), 400
+
+        file = request.files["file"]
+        lines = file.read().decode().split("\n")
+
+        summary, incidents = process_logs(lines)
+        ai = generate_ai(summary, incidents)
+
+        return jsonify({
+            "summary": summary,
+            "incidents": incidents,
+            "ai": ai
+        })
+
+    except Exception as e:
+        logging.error(f"Server error: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+# ❤️ Health Check (IMPORTANT)
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"})
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(host="0.0.0.0", port=5000)
