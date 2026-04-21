@@ -1,186 +1,185 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import numpy as np
+from sklearn.ensemble import IsolationForest
 import requests
-import time
-import logging
-import os
-import google.generativeai as genai
 
-# -----------------------------
-# ⚙️ APP SETUP
-# -----------------------------
 app = Flask(__name__)
 CORS(app)
 
-logging.basicConfig(level=logging.INFO)
+# ---------------- AI ---------------- #
 
-# -----------------------------
-# 🔑 GEMINI CONFIG
-# -----------------------------
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-
-# -----------------------------
-# 🔁 FALLBACK AI
-# -----------------------------
-def fallback(summary):
-    return """⚠️ Potential security threat detected.
-Possible weak authentication or abnormal activity.
-
-Recommendations:
-- Enable strong passwords
-- Use multi-factor authentication
-- Monitor logs continuously
-"""
-
-# -----------------------------
-# 🤖 GEMINI AI
-# -----------------------------
-def gemini_ai(summary, incidents):
-    start = time.time()
-
-    prompt = f"""
-You are a cybersecurity AI system.
-
-Analyze these incidents:
-{incidents[:5]}
-
-Give:
-1. Threat Type
-2. Root Cause
-3. Recommended Fix
-4. Risk Level
-
-Keep it short and clear.
-"""
-
-    model = genai.GenerativeModel("gemini-1.5-flash")
-
-    response = model.generate_content(prompt)
-
-    text = response.text.strip()
-
-    return {
-        "text": text,
-        "source": "gemini",
-        "model": "gemini-1.5-flash",
-        "time": round((time.time() - start) * 1000, 2),
-        "confidence": 95,
-        "status": "success"
-    }
-
-# -----------------------------
-# 🧠 AI ORCHESTRATOR
-# -----------------------------
-def generate_ai(summary, incidents):
-    start = time.time()
-
+def generate_ai_summary(summary, anomalies):
     try:
-        if not GEMINI_API_KEY:
-            raise Exception("No API key")
+        prompt = f"""
+You are a cybersecurity expert.
 
-        return gemini_ai(summary, incidents)
+Respond ONLY in format:
+Threat: <line>
+Cause: <line>
+Fix: <line>
 
-    except Exception as e:
-        logging.error(f"Gemini error: {e}")
+Data:
+Total logs: {summary['total']}
+High: {summary['high']}
+Medium: {summary['medium']}
+Anomalies: {len(anomalies)}
+"""
 
-        return {
-            "text": fallback(summary),
-            "source": "fallback",
-            "model": "rule-based",
-            "time": round((time.time() - start) * 1000, 2),
-            "confidence": 60,
-            "status": "degraded"
-        }
+        res = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "phi",
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=60
+        )
 
-# -----------------------------
-# 🔍 LOG PROCESSING
-# -----------------------------
-def process_logs(lines):
+        data = res.json()
+
+        if "response" in data:
+            return data["response"], "ollama"
+        elif "message" in data:
+            return data["message"]["content"], "ollama"
+
+        return fallback_ai(summary), "fallback"
+
+    except:
+        return fallback_ai(summary), "fallback"
+
+
+def fallback_ai(summary):
+    if summary["high"] > 0:
+        return "Threat: Critical attacks\nCause: Unauthorized access\nFix: Enable MFA"
+    elif summary["medium"] > 0:
+        return "Threat: System warnings\nCause: Misconfigurations\nFix: Monitor system"
+    else:
+        return "Threat: Safe\nCause: No issues\nFix: Continue monitoring"
+
+
+# ---------------- ML ANOMALY ---------------- #
+
+def detect_anomalies(features):
+    model = IsolationForest(contamination=0.2)
+    preds = model.fit_predict(features)
+
+    anomalies = [i for i, p in enumerate(preds) if p == -1]
+    return anomalies
+
+
+# ---------------- LOG PROCESS ---------------- #
+
+def process_logs(file):
+    content = file.read().decode("utf-8")
+    lines = [l for l in content.split("\n") if l.strip()]
+
     incidents = []
-    high, medium = 0, 0
+    features = []
     attack_types = {}
 
-    for l in lines:
-        l = l.strip()
-        if not l:
-            continue
+    high = 0
+    medium = 0
 
-        severity = None
+    for line in lines:
+        l = line.lower()
 
-        if "error" in l.lower():
-            severity = "High"
+        severity = 0
+        attack = "Normal"
+
+        # -------- OWASP-style detection -------- #
+        if "error" in l:
+            severity = 2
             high += 1
-        elif "warning" in l.lower():
-            severity = "Medium"
+        elif "warning" in l:
+            severity = 1
             medium += 1
 
-        if severity:
+        # 🔥 OWASP PATTERNS
+        if "select" in l or "drop" in l or "union" in l:
+            attack = "SQL Injection"
+        elif "script" in l or "<script>" in l:
+            attack = "XSS Attack"
+        elif "unauthorized" in l or "failed login" in l:
+            attack = "Brute Force"
+        elif "csrf" in l:
+            attack = "CSRF Attack"
+        elif "timeout" in l or "memory" in l:
+            attack = "Resource Exhaustion"
+        elif "admin" in l and "access denied" in l:
+            attack = "Privilege Escalation"
+
+        # -------- Feature vector (ML) -------- #
+        features.append([
+            severity,
+            len(line),
+            l.count("error"),
+            l.count("fail"),
+            l.count("attack")
+        ])
+
+        if severity > 0:
             incidents.append({
-                "severity": severity,
-                "message": l
+                "message": line,
+                "severity": "High" if severity == 2 else "Medium",
+                "type": attack
             })
 
-            # Detect attack types (simple logic)
-            if "login" in l.lower():
-                attack_types["Brute Force"] = attack_types.get("Brute Force", 0) + 1
-            elif "database" in l.lower():
-                attack_types["Database Failure"] = attack_types.get("Database Failure", 0) + 1
-            else:
-                attack_types["Resource Issue"] = attack_types.get("Resource Issue", 0) + 1
+        attack_types[attack] = attack_types.get(attack, 0) + 1
 
-    score = min(100, high * 10 + medium * 5)
+    import numpy as np
+    from sklearn.ensemble import IsolationForest
+
+    features = np.array(features)
+
+    model = IsolationForest(contamination=0.2)
+    preds = model.fit_predict(features)
+
+    anomalies_idx = [i for i, p in enumerate(preds) if p == -1]
+    anomalies = [lines[i] for i in anomalies_idx]
+
+    # -------- Risk Score -------- #
+    risk_score = min(100, high*10 + medium*5 + len(anomalies)*5)
+
+    risk = (
+        "HIGH" if risk_score > 60 else
+        "MEDIUM" if risk_score > 30 else
+        "LOW"
+    )
 
     summary = {
         "total": len(lines),
         "high": high,
         "medium": medium,
-        "risk_score": score,
-        "risk_level": "HIGH" if score > 60 else "MEDIUM" if score > 30 else "LOW"
+        "anomalies": len(anomalies),
+        "risk_score": risk_score,
+        "risk_level": risk
     }
 
-    return summary, incidents, attack_types
+    ai_summary, source = generate_ai_summary(summary, anomalies)
 
-# -----------------------------
-# 🌐 ROUTES
-# -----------------------------
-@app.route("/")
-def home():
-    return "🚀 NetMind AI Backend is Running!"
+    return {
+        "summary": summary,
+        "incidents": incidents,
+        "attack_types": attack_types,
+        "anomalies": anomalies,
+        "ai_summary": ai_summary,
+        "ai_source": source
+    }
 
-@app.route("/health")
-def health():
-    return jsonify({"status": "ok"})
+# ---------------- ROUTE ---------------- #
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
-    try:
-        if "file" not in request.files:
-            return jsonify({"error": "No file uploaded"}), 400
-
-        file = request.files["file"]
-        lines = file.read().decode().split("\n")
-
-        summary, incidents, attack_types = process_logs(lines)
-
-        ai = generate_ai(summary, incidents)
-
-        return jsonify({
-            "summary": summary,
-            "incidents": incidents,
-            "attack_types": attack_types,
-            "ai": ai
-        })
-
-    except Exception as e:
-        logging.error(f"Server error: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+    file = request.files["file"]
+    result = process_logs(file)
+    return jsonify(result)
 
 
-# -----------------------------
-# 🚀 RUN
-# -----------------------------
+@app.route("/health")
+def health():
+    return {"status": "ok"}
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run()
