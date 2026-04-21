@@ -2,244 +2,221 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>NetSage AI - Cyber Dashboard</title>
+<title>NetSage AI Level 4</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
-/* 🌌 Background */
-body {
-    background: radial-gradient(circle at top, #020617, #000000);
-}
-
-/* 🧊 Glass */
-.glass {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(0,255,255,0.1);
-}
-
-/* ⚡ Glow */
-.glow:hover {
-    box-shadow: 0 0 20px #00ffff;
-    transform: scale(1.03);
-}
-
-/* ✨ Neon */
-.neon {
-    color: #00ffff;
-    text-shadow: 0 0 10px #00ffff;
-}
-
-/* 🚨 Alert animation */
-.alert {
-    animation: pulse 1s infinite;
-}
+body { background: radial-gradient(circle,#020617,#000); }
+.glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); }
+.neon { color:#00ffff; text-shadow:0 0 10px #00ffff; }
+.alert { animation: pulse 1s infinite; }
 @keyframes pulse {
-    0% { box-shadow: 0 0 10px red; }
-    50% { box-shadow: 0 0 30px red; }
-    100% { box-shadow: 0 0 10px red; }
+0%{box-shadow:0 0 10px red;}
+50%{box-shadow:0 0 30px red;}
+100%{box-shadow:0 0 10px red;}
 }
-
 </style>
 </head>
 
 <body class="text-white p-6 font-sans">
 
-<h1 class="text-4xl font-bold neon mb-6">
-⚡ NetSage AI Cyber Dashboard
-</h1>
+<h1 class="text-4xl neon mb-6">⚡ NetSage AI Level 4</h1>
 
-<!-- ALERT -->
-<div id="alertBox" class="hidden p-4 mb-4 rounded-lg text-center font-bold"></div>
-
-<!-- FILE -->
-<input type="file" id="fileInput">
-<button onclick="uploadLogs()" class="glass px-4 py-2 ml-2 rounded-lg border border-cyan-400">
-Analyze Logs
+<input type="file" id="file">
+<button onclick="upload()" class="glass px-4 py-2 ml-2 rounded border border-cyan-400">
+Analyze
 </button>
 
 <!-- METRICS -->
-<div class="grid grid-cols-5 gap-4 mt-6">
+<div class="grid grid-cols-6 gap-4 mt-6">
 
-<div class="glass p-4 rounded-xl">
-<h3>Total Logs</h3>
-<h1 id="totalLogs" class="text-2xl neon">0</h1>
-</div>
-
-<div class="glass p-4 rounded-xl">
-<h3>High</h3>
-<h1 id="highLogs" class="text-2xl text-red-400">0</h1>
-</div>
-
-<div class="glass p-4 rounded-xl">
-<h3>Incidents</h3>
-<h1 id="incidentsCount" class="text-2xl">0</h1>
-</div>
-
-<div class="glass p-4 rounded-xl">
-<h3>Risk Level</h3>
-<h1 id="riskLevel" class="text-2xl">-</h1>
-</div>
-
-<div class="glass p-4 rounded-xl">
-<h3>Risk Score</h3>
-<h1 id="riskScore" class="text-2xl text-purple-400">0</h1>
-</div>
+<div class="glass p-4">Total <h1 id="total"></h1></div>
+<div class="glass p-4 text-red-400">High <h1 id="high"></h1></div>
+<div class="glass p-4 text-yellow-400">Medium <h1 id="medium"></h1></div>
+<div class="glass p-4 text-cyan-400">Anomaly <h1 id="anomaly"></h1></div>
+<div class="glass p-4">Risk <h1 id="risk"></h1></div>
+<div class="glass p-4 text-purple-400">Score <h1 id="score"></h1></div>
 
 </div>
 
-<!-- RISK METER -->
-<div class="glass p-6 mt-6 rounded-xl text-center">
-<h3 class="neon mb-2">Threat Level</h3>
-<canvas id="riskMeter" width="200" height="200"></canvas>
-</div>
+<!-- CHARTS -->
+<div class="grid grid-cols-3 gap-6 mt-6">
 
-<!-- CHART -->
-<div class="glass p-4 mt-6 rounded-xl">
-<h3 class="neon mb-2">Severity Distribution</h3>
+<div class="glass p-4">
+<h3 class="neon">Severity</h3>
 <canvas id="severityChart"></canvas>
 </div>
 
-<!-- ATTACK TYPES -->
-<div class="glass p-4 mt-6 rounded-xl">
-<h3 class="neon mb-2">Attack Types</h3>
-<div id="attackTypes"></div>
+<div class="glass p-4">
+<h3 class="neon">Attack Types</h3>
+<canvas id="attackChart"></canvas>
 </div>
 
-<!-- LOGS -->
-<div class="glass p-4 mt-6 rounded-xl">
-<h3 class="neon mb-2">Live Logs</h3>
-<table class="w-full text-sm">
-<thead>
-<tr><th>Time</th><th>Severity</th><th>Message</th></tr>
-</thead>
-<tbody id="logsTable"></tbody>
-</table>
+<div class="glass p-4 text-center">
+<h3 class="neon">Risk Meter</h3>
+<canvas id="riskMeter"></canvas>
+</div>
+
+</div>
+
+<!-- TIMELINE -->
+<div class="glass p-4 mt-6">
+<h3 class="neon">📊 Threat Timeline</h3>
+<canvas id="timelineChart"></canvas>
+</div>
+
+<!-- ANOMALIES -->
+<div class="glass p-4 mt-6">
+<h3 class="neon">🚨 Anomalies</h3>
+<div id="anomaliesBox"></div>
 </div>
 
 <!-- AI -->
 <div class="glass p-4 mt-6 rounded-xl">
 <h3 class="neon mb-3">🤖 AI Insight</h3>
-<div id="aiSummary">Upload logs...</div>
+<div id="ai"></div>
 </div>
 
 <script>
 
-let chartInstance = null;
-let meterInstance = null;
+let severityChart, attackChart, riskMeter, timelineChart;
+let historyData = [];
 
-async function uploadLogs() {
+// 🚀 MAIN FUNCTION
+async function upload() {
 
-let file = document.getElementById("fileInput").files[0];
-if (!file) return alert("Select file");
+    let file = document.getElementById("file").files[0];
+    if (!file) return alert("Select file");
 
-document.getElementById("aiSummary").innerHTML = "🤖 Thinking...";
+    document.getElementById("ai").innerText = "🤖 Analyzing...";
 
-let formData = new FormData();
-formData.append("file", file);
+    let form = new FormData();
+    form.append("file", file);
 
-let res = await fetch("https://h2h-hack-hustlers-netmindai.onrender.com/analyze", {
-method: "POST",
-body: formData
-});
+    let res = await fetch("http://localhost:5000/analyze", {
+        method: "POST",
+        body: form
+    });
 
-let data = await res.json();
+    let data = await res.json();
 
-// METRICS
-document.getElementById("totalLogs").innerText = data.summary.total;
-document.getElementById("highLogs").innerText = data.summary.high;
-document.getElementById("incidentsCount").innerText = data.incidents.length;
-document.getElementById("riskScore").innerText = data.summary.risk_score;
-
-// RISK LEVEL
-let risk = data.summary.risk_level;
-let riskEl = document.getElementById("riskLevel");
-riskEl.innerText = risk;
-
-// ALERT
-let alertBox = document.getElementById("alertBox");
-if (risk === "HIGH") {
-alertBox.className = "alert bg-red-600 p-4 rounded text-white";
-alertBox.innerText = "🚨 CRITICAL THREAT DETECTED";
-alertBox.classList.remove("hidden");
-} else {
-alertBox.classList.add("hidden");
+    updateUI(data);
 }
 
-// AI
-renderAI(data.ai_summary);
+// 🧠 UPDATE UI
+function updateUI(data){
 
-// TABLE
-let table = document.getElementById("logsTable");
-table.innerHTML = "";
-data.incidents.forEach(i => {
-table.innerHTML += `
-<tr>
-<td>${new Date().toLocaleTimeString()}</td>
-<td>${i.severity}</td>
-<td>${i.message}</td>
-</tr>`;
-});
+    // METRICS
+    document.getElementById("total").innerText = data.summary.total;
+    document.getElementById("high").innerText = data.summary.high;
+    document.getElementById("medium").innerText = data.summary.medium;
+    document.getElementById("anomaly").innerText = data.summary.anomalies;
+    document.getElementById("score").innerText = data.summary.risk_score;
 
-// ATTACK TYPES
-let div = document.getElementById("attackTypes");
-div.innerHTML = "";
-for (let t in data.attack_types) {
-div.innerHTML += `<div>${t} : ${data.attack_types[t]}</div>`;
+    let riskEl = document.getElementById("risk");
+    riskEl.innerText = data.summary.risk_level;
+
+    // 🎨 Risk color
+    if(data.summary.risk_level === "HIGH"){
+        riskEl.className = "text-red-500 text-xl";
+    } else if(data.summary.risk_level === "MEDIUM"){
+        riskEl.className = "text-yellow-400 text-xl";
+    } else {
+        riskEl.className = "text-green-400 text-xl";
+    }
+
+    // 🤖 AI (formatted)
+    renderAI(data.ai_summary);
+
+    // 🚨 ANOMALIES
+    let box = document.getElementById("anomaliesBox");
+    box.innerHTML = "";
+    data.anomalies.forEach(a => {
+        box.innerHTML += `<div class="text-red-400">${a}</div>`;
+    });
+
+    // 📊 SEVERITY CHART
+    if (severityChart) severityChart.destroy();
+    severityChart = new Chart(document.getElementById("severityChart"), {
+        type:"doughnut",
+        data:{
+            labels:["High","Medium","Anomaly"],
+            datasets:[{
+                data:[
+                    data.summary.high,
+                    data.summary.medium,
+                    data.summary.anomalies
+                ],
+                backgroundColor:["red","yellow","cyan"]
+            }]
+        }
+    });
+
+    // 🧠 ATTACK TYPES
+    if (attackChart) attackChart.destroy();
+    attackChart = new Chart(document.getElementById("attackChart"), {
+        type:"pie",
+        data:{
+            labels:Object.keys(data.attack_types || {}),
+            datasets:[{
+                data:Object.values(data.attack_types || {})
+            }]
+        }
+    });
+
+    // 🔥 RISK METER
+    if (riskMeter) riskMeter.destroy();
+    riskMeter = new Chart(document.getElementById("riskMeter"), {
+        type:"doughnut",
+        data:{
+            datasets:[{
+                data:[
+                    data.summary.risk_score,
+                    100 - data.summary.risk_score
+                ],
+                backgroundColor:["red","#222"]
+            }]
+        },
+        options:{ cutout:"80%" }
+    });
+
+    // 📈 TIMELINE
+    historyData.push(data.summary.high);
+
+    if (timelineChart) timelineChart.destroy();
+    timelineChart = new Chart(document.getElementById("timelineChart"), {
+        type:"line",
+        data:{
+            labels:historyData.map((_,i)=>i),
+            datasets:[{
+                label:"Threat Trend",
+                data:historyData
+            }]
+        }
+    });
 }
 
-// CHART
-if (chartInstance) chartInstance.destroy();
-chartInstance = new Chart(document.getElementById("severityChart"), {
-type: "doughnut",
-data: {
-labels: ["High","Medium"],
-datasets: [{
-data: [data.summary.high, data.summary.medium],
-backgroundColor: ["red","yellow"]
-}]
+// 🎯 AI FORMAT FUNCTION
+function renderAI(text){
+
+    let lines = text.split("\n");
+    let html = "";
+
+    lines.forEach(line=>{
+        if(line.toLowerCase().includes("threat"))
+            html += `<div class="text-red-400 font-bold">🚨 ${line}</div>`;
+        else if(line.toLowerCase().includes("cause"))
+            html += `<div class="text-yellow-400">🧠 ${line}</div>`;
+        else if(line.toLowerCase().includes("fix"))
+            html += `<div class="text-green-400">🛠 ${line}</div>`;
+        else
+            html += `<div>${line}</div>`;
+    });
+
+    document.getElementById("ai").innerHTML = html;
 }
-});
-
-// RISK METER
-if (meterInstance) meterInstance.destroy();
-meterInstance = new Chart(document.getElementById("riskMeter"), {
-type: "doughnut",
-data: {
-labels: ["Risk","Safe"],
-datasets: [{
-data: [data.summary.risk_score, 100 - data.summary.risk_score],
-backgroundColor: ["red","#222"]
-}]
-}
-});
-
-}
-
-// AI RENDER
-function renderAI(text) {
-let el = document.getElementById("aiSummary");
-let lines = text.split("\n").filter(l=>l.trim());
-
-let titles = ["🚨 Threat","🧠 Cause","🛠 Fix"];
-let html = "";
-
-for (let i=0;i<lines.length;i++){
-html += `
-<div class="mb-3 p-3 glass rounded">
-<div class="text-cyan-400">${titles[i]}</div>
-<div>${lines[i]}</div>
-</div>`;
-}
-
-el.innerHTML = html;
-}
-
-document.getElementById("aiSource").innerText =
-    "Source: " + data.ai_source;
 
 </script>
 
