@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 venv/
 __pycache__/
 *.pycbackend/.env
 backend/.env
+=======
+.vercel
+>>>>>>> e1d774d6 (NetLens AI)
