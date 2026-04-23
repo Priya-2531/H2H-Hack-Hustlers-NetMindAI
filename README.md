@@ -9,13 +9,16 @@ div align="center">
 
 
 <br>
-https://img.shields.io/static/v1?label=Vite&message=Frontend&color=purple&style=for-the-badge&logo=vite
+
+<div align="center">
+
 ![Vite](https://img.shields.io/badge/Vite-Frontend-purple?style=for-the-badge&logo=vite)
 ![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)
 ![AI](https://img.shields.io/badge/AI-Powered-orange?style=for-the-badge)
 ![Security](https://img.shields.io/badge/Cybersecurity-Detection-red?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
- 
+
+</div>
 ---
  
 ### 🚀 A next-gen AI dashboard that **analyzes**, **detects**, and **explains** network threats in real-time
