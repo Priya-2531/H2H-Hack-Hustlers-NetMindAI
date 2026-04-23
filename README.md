@@ -25,7 +25,9 @@ div align="center">
  
 <br>
 | 📥 Input | 🤖 Processing | 📊 Output |
+
 |:---:|:---:|:---:|
+
 | Syslog · VPC Logs | AI Detection · Pattern Matching | Insights · Alerts · Dashboard |
  
 </div>
@@ -143,7 +145,8 @@ ai-network-log-translator/
 ## 🎥 Live Demo
  
 <div align="center">
-<img src="./screenshots/demo.gif" width="85%" alt="NetLens AI Demo" />
+</home/administrator-tb/Videos/Screencasts/Screencast from 2026-04-23 19-54-39.webm>
+ 
 </div>
 ---
  
