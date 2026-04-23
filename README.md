@@ -5,7 +5,9 @@ div align="center">
 ### *Turning Raw Network Logs into Actionable Intelligence*
  
 <br>
-<img src="./screenshots/dashboard.png" width="85%" alt="NetLens AI Dashboard" />
+<img width="1302" height="653" alt="WhatsApp Image 2026-04-23 at 7 11 29 PM(1)" src="https://github.com/user-attachments/assets/0e68e401-29b3-4534-8610-88ad7f4e3140"  alt="NetLens AI Dashboard"/>
+
+
 <br>
 ![Vite](https://img.shields.io/badge/Vite-Frontend-purple?style=for-the-badge&logo=vite)
 ![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)
@@ -126,7 +128,15 @@ ai-network-log-translator/
 <div align="center">
 | Dashboard View | Log Analysis |
 |:---:|:---:|
-| <img src="./screenshots/dashboard.png" width="100%" alt="Dashboard" /> | <img src="./screenshots/logs.png" width="100%" alt="Log Analysis" /> |
+ |<img width="1296" height="656" alt="WhatsApp Image 2026-04-23 at 7 11 30 PM" src="https://github.com/user-attachments/assets/3dd3beff-c00a-4624-86cd-90cd742bc577" / alt="Dashboard" >|
+ 
+
+|<img width="1303" height="647" alt="Screenshot from 2026-04-23 19-34-24" src="https://github.com/user-attachments/assets/dadf9827-1165-4252-82ec-442ce81d93b6" alt="logs" />|
+
+|<img width="1303" height="647" alt="image" src="https://github.com/user-attachments/assets/29890a56-2b16-48af-9af5-d16c66e5a7bf" alt="output"/>|
+|
+
+
  
 </div>
 ---
