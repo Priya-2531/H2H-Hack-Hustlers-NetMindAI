@@ -9,7 +9,7 @@ div align="center">
 
 
 <br>
-![Vite](https://img.shields.io/badge/Vite-Frontend-purple?style=for-the-badge&logo=vite)
+"![Vite](https://img.shields.io/badge/Vite-Frontend-purple?style=for-the-badge&logo=vite)"
 ![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)
 ![AI](https://img.shields.io/badge/AI-Powered-orange?style=for-the-badge)
 ![Security](https://img.shields.io/badge/Cybersecurity-Detection-red?style=for-the-badge)
@@ -128,13 +128,8 @@ ai-network-log-translator/
 <div align="center">
 | Dashboard View | Log Analysis |
 |:---:|:---:|
- |<img width="1296" height="656" alt="WhatsApp Image 2026-04-23 at 7 11 30 PM" src="https://github.com/user-attachments/assets/3dd3beff-c00a-4624-86cd-90cd742bc577" / alt="Dashboard" >|
- 
+ |<img width="1296" height="656" alt="WhatsApp Image 2026-04-23 at 7 11 30 PM" src="https://github.com/user-attachments/assets/3dd3beff-c00a-4624-86cd-90cd742bc577" / alt="Dashboard" >|<img width="1303" height="647" alt="Screenshot from 2026-04-23 19-34-24" src="https://github.com/user-attachments/assets/dadf9827-1165-4252-82ec-442ce81d93b6" alt="logs" />|<img width="1303" height="647" alt="image" src="https://github.com/user-attachments/assets/29890a56-2b16-48af-9af5-d16c66e5a7bf" alt="output"/>|
 
-|<img width="1303" height="647" alt="Screenshot from 2026-04-23 19-34-24" src="https://github.com/user-attachments/assets/dadf9827-1165-4252-82ec-442ce81d93b6" alt="logs" />|
-
-|<img width="1303" height="647" alt="image" src="https://github.com/user-attachments/assets/29890a56-2b16-48af-9af5-d16c66e5a7bf" alt="output"/>|
-|
 
 
  
