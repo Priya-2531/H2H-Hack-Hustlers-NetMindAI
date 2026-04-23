@@ -145,7 +145,7 @@ ai-network-log-translator/
 ## 🎥 Live Demo
  
 <div align="center">
-</home/administrator-tb/Videos/Screencasts/Screencast from 2026-04-23 19-54-39.webm>
+
  
 </div>
 ---
