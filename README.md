@@ -9,7 +9,8 @@ div align="center">
 
 
 <br>
-"![Vite](https://img.shields.io/badge/Vite-Frontend-purple?style=for-the-badge&logo=vite)"
+https://img.shields.io/static/v1?label=Vite&message=Frontend&color=purple&style=for-the-badge&logo=vite
+![Vite](https://img.shields.io/badge/Vite-Frontend-purple?style=for-the-badge&logo=vite)
 ![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)
 ![AI](https://img.shields.io/badge/AI-Powered-orange?style=for-the-badge)
 ![Security](https://img.shields.io/badge/Cybersecurity-Detection-red?style=for-the-badge)
